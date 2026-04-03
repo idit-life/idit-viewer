@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Idit Viewer</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
@@ -12,10 +12,16 @@
     background: #0a0a0a; color: #33ff33;
     min-height: 100vh;
   }
+  body.vonnegut-mode {
+    background: #1a1714;
+  }
   body::before {
     content: ''; position: fixed; top:0; left:0; right:0; bottom:0;
     background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px);
     pointer-events: none; z-index: 999;
+  }
+  body.vonnegut-mode::before {
+    background: none;
   }
   a { color: #00ffcc; text-decoration: none; }
   a:hover { text-decoration: underline; }
@@ -26,38 +32,78 @@
     padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
     flex-wrap: wrap; gap: 12px;
   }
+  body.vonnegut-mode .topbar {
+    background: #1e1a15; border-bottom-color: #3a3228;
+  }
   .topbar h1 {
     font-size: 16px; letter-spacing: 4px; color: #33ff33;
     text-shadow: 0 0 10px rgba(51,255,51,0.4);
   }
+  body.vonnegut-mode .topbar h1 {
+    font-family: 'Caveat', cursive; font-size: 26px; letter-spacing: 2px;
+    color: #e8d5b7; text-shadow: none;
+  }
   .topbar .sub { color: #1a8a1a; font-size: 10px; letter-spacing: 2px; margin-left: 12px; }
+  body.vonnegut-mode .topbar .sub { color: #8a7a60; }
   .topbar-right { display: flex; align-items: center; gap: 16px; }
   .server-url {
     background: #050f05; border: 1px solid #1a3a1a; color: #33ff33;
     font-family: 'Share Tech Mono', monospace; font-size: 12px;
     padding: 6px 10px; width: 240px; outline: none;
   }
+  body.vonnegut-mode .server-url {
+    background: #15120e; border-color: #3a3228; color: #e8d5b7;
+  }
   .server-url:focus { border-color: #33ff33; }
+  body.vonnegut-mode .server-url:focus { border-color: #e8d5b7; }
   .connect-btn {
     background: #1a3a1a; border: 1px solid #33ff33; color: #33ff33;
     font-family: 'Share Tech Mono', monospace; font-size: 11px;
     padding: 6px 14px; cursor: pointer; letter-spacing: 1px;
   }
   .connect-btn:hover { background: #33ff33; color: #0a0a0a; }
+  body.vonnegut-mode .connect-btn {
+    background: #2a2520; border-color: #e8d5b7; color: #e8d5b7;
+  }
+  body.vonnegut-mode .connect-btn:hover {
+    background: #e8d5b7; color: #1a1714;
+  }
   .status-dot {
     width: 8px; height: 8px; border-radius: 50%;
     background: #ff3333; display: inline-block;
   }
   .status-dot.ok { background: #33ff33; box-shadow: 0 0 6px rgba(51,255,51,0.6); }
+  body.vonnegut-mode .status-dot.ok { background: #c4a86c; box-shadow: 0 0 6px rgba(196,168,108,0.6); }
+
+  /* View toggle */
+  .view-toggle {
+    display: flex; gap: 0; border: 1px solid #33ff33; overflow: hidden;
+  }
+  body.vonnegut-mode .view-toggle { border-color: #e8d5b7; }
+  .view-toggle button {
+    background: transparent; border: none; color: #33ff33;
+    font-family: 'Share Tech Mono', monospace; font-size: 10px;
+    padding: 6px 12px; cursor: pointer; letter-spacing: 1px;
+    border-right: 1px solid #33ff33;
+  }
+  .view-toggle button:last-child { border-right: none; }
+  .view-toggle button.active {
+    background: #33ff33; color: #0a0a0a;
+  }
+  body.vonnegut-mode .view-toggle button { color: #e8d5b7; border-right-color: #e8d5b7; }
+  body.vonnegut-mode .view-toggle button.active { background: #e8d5b7; color: #1a1714; }
 
   /* Stats bar */
   .stats-bar {
     display: flex; gap: 32px; padding: 16px 24px;
     border-bottom: 1px solid #0d1a0d; flex-wrap: wrap;
   }
+  body.vonnegut-mode .stats-bar { border-bottom-color: #2a2520; }
   .stat { display: flex; flex-direction: column; }
   .stat .val { color: #33ff33; font-size: 22px; }
+  body.vonnegut-mode .stat .val { color: #e8d5b7; font-family: 'Caveat', cursive; font-size: 28px; }
   .stat .lbl { color: #1a8a1a; font-size: 9px; letter-spacing: 1px; margin-top: 2px; }
+  body.vonnegut-mode .stat .lbl { color: #8a7a60; }
 
   /* Layout */
   .main { display: flex; min-height: calc(100vh - 120px); }
@@ -65,17 +111,23 @@
     width: 240px; min-width: 240px; border-right: 1px solid #1a3a1a;
     background: #0d1a0d; padding: 16px; overflow-y: auto;
   }
+  body.vonnegut-mode .sidebar { background: #1e1a15; border-right-color: #3a3228; }
   .content { flex: 1; padding: 20px 24px; overflow-y: auto; }
 
   /* Sidebar */
   .sidebar h3 { font-size: 10px; color: #1a8a1a; letter-spacing: 2px; margin-bottom: 10px; }
+  body.vonnegut-mode .sidebar h3 { color: #8a7a60; }
   .filter-group { margin-bottom: 20px; }
   .filter-group label { display: block; font-size: 10px; color: #1a8a1a; letter-spacing: 1px; margin-bottom: 4px; }
   .filter-group input, .filter-group select {
     width: 100%; background: #050f05; border: 1px solid #1a3a1a; color: #33ff33;
     font-family: 'Share Tech Mono', monospace; font-size: 11px; padding: 6px 8px; outline: none;
   }
+  body.vonnegut-mode .filter-group input, body.vonnegut-mode .filter-group select {
+    background: #15120e; border-color: #3a3228; color: #e8d5b7;
+  }
   .filter-group input:focus, .filter-group select:focus { border-color: #33ff33; }
+  body.vonnegut-mode .filter-group input:focus, body.vonnegut-mode .filter-group select:focus { border-color: #e8d5b7; }
   .signer-list { list-style: none; }
   .signer-list li {
     padding: 4px 0; font-size: 11px; cursor: pointer; display: flex;
@@ -83,7 +135,10 @@
   }
   .signer-list li:hover { color: #00ffcc; }
   .signer-list li.active { color: #00ffcc; }
+  body.vonnegut-mode .signer-list li:hover { color: #c4a86c; }
+  body.vonnegut-mode .signer-list li.active { color: #c4a86c; }
   .signer-list .count { color: #1a8a1a; font-size: 10px; }
+  body.vonnegut-mode .signer-list .count { color: #8a7a60; }
   .type-list { list-style: none; }
   .type-list li {
     padding: 3px 0; font-size: 11px; cursor: pointer; display: flex;
@@ -91,7 +146,10 @@
   }
   .type-list li:hover { color: #ffaa00; }
   .type-list li.active { color: #ffaa00; }
+  body.vonnegut-mode .type-list li:hover { color: #c4a86c; }
+  body.vonnegut-mode .type-list li.active { color: #c4a86c; }
   .type-list .count { color: #1a8a1a; font-size: 10px; }
+  body.vonnegut-mode .type-list .count { color: #8a7a60; }
 
   /* Verify banner */
   .verify-bar {
@@ -129,6 +187,7 @@
   .entry-type.letter { background: #ff69b4; color: #0a0a0a; }
   .entry-type.morning_report { background: #33cccc; color: #0a0a0a; }
   .entry-type.battle_plan { background: #ff3333; }
+  .entry-type.feeling { background: #d4a030; color: #1a1714; }
   .entry-author { color: #ffaa00; font-size: 11px; }
   .entry-time { color: #0d5a0d; font-size: 11px; }
   .entry-desc { color: #669966; font-size: 12px; margin-top: 8px; }
@@ -146,6 +205,57 @@
     line-height: 1.6; white-space: pre-wrap; max-height: 400px;
     overflow-y: auto; color: #aaffaa;
   }
+
+  /* Feeling entry style (timeline) */
+  .entry-card.entry-feeling {
+    background: #1a1608; border-color: #3a3218;
+  }
+  .entry-card.entry-feeling:hover { border-color: #d4a030; }
+  .entry-card.entry-feeling.expanded { border-color: #d4a030; }
+  .entry-card.entry-feeling .entry-desc { color: #a89060; font-style: italic; }
+  .entry-card.entry-feeling .entry-content {
+    background: #15120a; border-color: #3a3218; color: #d4c090;
+    font-family: 'Caveat', cursive; font-size: 16px; line-height: 1.8;
+  }
+
+  /* Letter entry style (timeline) */
+  .entry-card.entry-letter {
+    background: #18140e; border-color: #3a3020;
+  }
+  .entry-card.entry-letter:hover { border-color: #c4a86c; }
+  .entry-card.entry-letter.expanded { border-color: #c4a86c; }
+  .entry-card.entry-letter .entry-content {
+    background: #1e1a12; border-color: #3a3020; color: #d4c8a8;
+    font-family: 'Caveat', cursive; font-size: 15px; line-height: 1.7;
+  }
+
+  /* Locked / sealed entries */
+  .entry-card.entry-locked {
+    background: #0d0d1a; border-color: #1a1a3a; position: relative;
+  }
+  .entry-card.entry-locked:hover { border-color: #4a4a8a; }
+  .lock-overlay {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 10px; padding: 14px;
+    background: #0a0a15; border: 1px dashed #2a2a5a;
+    color: #6a6aaa; font-size: 12px;
+  }
+  .lock-icon {
+    font-size: 20px; color: #6a6aaa;
+  }
+  .lock-date { color: #8a8acc; font-size: 11px; }
+
+  .entry-card.entry-sealed {
+    background: #1a0d0d; border-color: #3a1a1a; position: relative;
+  }
+  .entry-card.entry-sealed:hover { border-color: #5a2a2a; }
+  .seal-overlay {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 10px; padding: 14px;
+    background: #150a0a; border: 1px dashed #3a1a1a;
+    color: #8a4a4a; font-size: 12px;
+  }
+  .seal-icon { font-size: 20px; color: #8a4a4a; }
 
   /* Pagination */
   .pagination {
@@ -167,19 +277,184 @@
     text-align: center; padding: 60px 20px; color: #1a8a1a;
   }
   .empty h2 { font-size: 14px; letter-spacing: 2px; margin-bottom: 12px; color: #33ff33; }
+  body.vonnegut-mode .empty h2 { color: #e8d5b7; font-family: 'Caveat', cursive; font-size: 22px; }
   .empty p { font-size: 12px; line-height: 1.8; }
   .empty code {
     background: #0d1a0d; padding: 2px 8px; border: 1px solid #1a3a1a;
     color: #33ff33;
   }
 
+  /* ============================== */
+  /* VONNEGUT VIEW (Constellation)  */
+  /* ============================== */
+
+  .vonnegut-container {
+    display: none;
+  }
+  .vonnegut-container.active {
+    display: block;
+  }
+  .timeline-container {
+    display: block;
+  }
+  .timeline-container.hidden {
+    display: none;
+  }
+
+  .vonnegut-mosaic {
+    column-count: 4; column-gap: 14px;
+    max-width: 1200px;
+    padding-bottom: 40px;
+  }
+
+  .vcard {
+    break-inside: avoid;
+    background: #2a2520; border: 2px dashed #4a4035;
+    padding: 12px 14px; margin-bottom: 14px;
+    cursor: pointer; position: relative;
+    transition: transform 0.15s, box-shadow 0.15s;
+    font-family: 'Caveat', cursive;
+  }
+  .vcard:hover {
+    box-shadow: 0 0 12px rgba(232,213,183,0.15);
+    z-index: 10;
+  }
+  .vcard.expanded {
+    border-color: #e8d5b7; border-style: solid;
+    box-shadow: 0 0 20px rgba(232,213,183,0.2);
+  }
+  .vcard-id {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px; color: #6a5a40; letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .vcard-type {
+    display: inline-block; font-family: 'Share Tech Mono', monospace;
+    font-size: 9px; letter-spacing: 1px; padding: 1px 6px;
+    margin-bottom: 6px; border-radius: 2px;
+    color: #1a1714; background: #8a7a60;
+  }
+  .vcard-type.genesis { background: #d4a030; }
+  .vcard-type.note { background: #6a8a5a; }
+  .vcard-type.memory { background: #7a6aad; color: #fff; }
+  .vcard-type.decision { background: #c05030; color: #fff; }
+  .vcard-type.milestone { background: #c4a030; }
+  .vcard-type.document { background: #5080c0; color: #fff; }
+  .vcard-type.letter { background: #c07090; }
+  .vcard-type.morning_report { background: #409090; }
+  .vcard-type.battle_plan { background: #c03030; color: #fff; }
+  .vcard-type.feeling { background: #d4a030; }
+  .vcard-signer {
+    font-size: 15px; color: #c4a86c; margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .vcard-snippet {
+    font-size: 16px; color: #b8a888; line-height: 1.3;
+  }
+  .vcard-time {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px; color: #5a4a35; margin-top: 6px;
+  }
+
+  /* Vonnegut card detail (expanded) */
+  .vcard-detail {
+    display: none; margin-top: 10px; padding-top: 10px;
+    border-top: 1px dashed #4a4035;
+  }
+  .vcard.expanded .vcard-detail { display: block; }
+  .vcard-detail .detail-row { display: flex; margin-bottom: 4px; font-size: 10px; font-family: 'Share Tech Mono', monospace; }
+  .vcard-detail .detail-label { color: #6a5a40; min-width: 100px; }
+  .vcard-detail .detail-value { color: #b8a888; word-break: break-all; }
+  .vcard-detail .vcard-content {
+    background: #1e1a12; border: 1px dashed #3a3228;
+    padding: 10px; margin-top: 8px;
+    font-family: 'Caveat', cursive; font-size: 15px;
+    line-height: 1.6; white-space: pre-wrap;
+    max-height: 300px; overflow-y: auto; color: #c4b890;
+  }
+
+  /* Vonnegut locked/sealed cards */
+  .vcard.vcard-locked {
+    background: #1a1a25; border-color: #3a3a5a;
+  }
+  .vcard.vcard-locked .vcard-snippet { color: #6a6a8a; }
+  .vcard.vcard-sealed {
+    background: #25181a; border-color: #5a3030;
+  }
+  .vcard.vcard-sealed .vcard-snippet { color: #8a5050; }
+
+  /* Vonnegut feeling cards */
+  .vcard.vcard-feeling {
+    background: #2a2418; border-color: #5a4a28;
+  }
+  .vcard.vcard-feeling .vcard-snippet { color: #d4b870; font-style: italic; }
+
+  /* Vonnegut letter cards */
+  .vcard.vcard-letter {
+    background: #28241a; border-color: #4a4028;
+  }
+  .vcard.vcard-letter .vcard-snippet { color: #c8b890; }
+
+  /* Signer color accents for vonnegut cards */
+  .vcard[data-signer-idx="0"] { border-left: 3px solid #c4a86c; }
+  .vcard[data-signer-idx="1"] { border-left: 3px solid #6a9ac4; }
+  .vcard[data-signer-idx="2"] { border-left: 3px solid #c47a6a; }
+  .vcard[data-signer-idx="3"] { border-left: 3px solid #7ac46a; }
+  .vcard[data-signer-idx="4"] { border-left: 3px solid #b06ac4; }
+  .vcard[data-signer-idx="5"] { border-left: 3px solid #c4c46a; }
+  .vcard[data-signer-idx="6"] { border-left: 3px solid #6ac4b8; }
+  .vcard[data-signer-idx="7"] { border-left: 3px solid #c46a9a; }
+
+  /* Vonnegut quote */
+  .vonnegut-quote {
+    max-width: 700px; margin: 40px auto 20px; text-align: center;
+    font-family: 'Caveat', cursive; font-size: 18px;
+    color: #6a5a40; line-height: 1.6; padding: 20px;
+    border-top: 1px dashed #3a3228;
+  }
+  .vonnegut-quote .attribution {
+    margin-top: 10px; font-size: 14px; color: #4a3a28;
+    font-family: 'Share Tech Mono', monospace; font-style: italic;
+    letter-spacing: 1px;
+  }
+
+  /* Cluster label in Vonnegut view */
+  .cluster-label {
+    font-family: 'Caveat', cursive; font-size: 22px; font-weight: 700;
+    color: #8a7a60; margin: 24px 0 12px; padding-bottom: 6px;
+    border-bottom: 1px dashed #3a3228;
+    column-span: all;
+  }
+  .cluster-label:first-child { margin-top: 0; }
+
+  /* Vonnegut cluster mode selector */
+  .cluster-toggle {
+    display: none; margin-bottom: 16px;
+  }
+  .cluster-toggle.active { display: flex; gap: 8px; align-items: center; }
+  .cluster-toggle label {
+    font-family: 'Caveat', cursive; font-size: 16px; color: #8a7a60;
+  }
+  .cluster-toggle select {
+    background: #2a2520; border: 1px dashed #4a4035; color: #e8d5b7;
+    font-family: 'Caveat', cursive; font-size: 15px; padding: 4px 8px;
+    outline: none; cursor: pointer;
+  }
+
   /* Responsive */
+  @media (max-width: 1100px) {
+    .vonnegut-mosaic { column-count: 3; }
+  }
   @media (max-width: 768px) {
     .main { flex-direction: column; }
     .sidebar { width: 100%; min-width: unset; border-right: none; border-bottom: 1px solid #1a3a1a; }
     .topbar { flex-direction: column; align-items: flex-start; }
-    .topbar-right { width: 100%; }
-    .server-url { flex: 1; }
+    .topbar-right { width: 100%; flex-wrap: wrap; }
+    .server-url { flex: 1; min-width: 160px; }
+    .vonnegut-mosaic { column-count: 2; }
+  }
+  @media (max-width: 480px) {
+    .vonnegut-mosaic { column-count: 1; }
   }
 </style>
 </head>
@@ -191,6 +466,10 @@
     <span class="sub">CHAIN VIEWER</span>
   </div>
   <div class="topbar-right">
+    <div class="view-toggle">
+      <button id="btnTimeline" class="active" onclick="switchView('timeline')">TIMELINE</button>
+      <button id="btnVonnegut" onclick="switchView('vonnegut')">VONNEGUT</button>
+    </div>
     <span class="status-dot" id="statusDot"></span>
     <input type="text" class="server-url" id="serverUrl" value="http://localhost:18793" placeholder="Server URL">
     <button class="connect-btn" onclick="connectToServer()">CONNECT</button>
@@ -226,8 +505,26 @@
     </div>
   </div>
   <div class="content">
-    <div class="timeline" id="timeline"></div>
-    <div class="pagination" id="pagination"></div>
+    <div class="timeline-container" id="timelineContainer">
+      <div class="timeline" id="timeline"></div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+    <div class="vonnegut-container" id="vonnegutContainer">
+      <div class="cluster-toggle" id="clusterToggle">
+        <label>cluster by:</label>
+        <select id="clusterMode" onchange="renderVonnegut()">
+          <option value="signer">signer</option>
+          <option value="type">type</option>
+          <option value="none">none (scatter)</option>
+        </select>
+      </div>
+      <div class="vonnegut-mosaic" id="vonnegutMosaic"></div>
+      <div class="vonnegut-quote">
+        "There is no beginning, no middle, no end, no suspense, no moral, no causes, no effects.
+        What we love in our books are the depths of many marvelous moments seen all at one time."
+        <div class="attribution">-- Kurt Vonnegut, Slaughterhouse-Five</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -241,6 +538,9 @@ let filterSigner = null;
 let filterType = null;
 let searchQuery = '';
 let searchTimeout = null;
+let currentView = 'timeline'; // 'timeline' or 'vonnegut'
+let signerMap = {}; // signer name -> index for color coding
+let sealedRefs = new Set(); // entry_ids referenced by sealed_ref
 
 function connectToServer() {
   BASE = document.getElementById('serverUrl').value.replace(/\/+$/, '');
@@ -283,15 +583,25 @@ async function loadAll() {
 
     renderSignerList(stats.authors || {});
     renderTypeList(stats.entry_types || {});
+
+    // Build signer color map
+    signerMap = {};
+    let idx = 0;
+    for (const name of Object.keys(stats.authors || {})) {
+      signerMap[name] = idx % 8;
+      idx++;
+    }
   }
 
-  // Load all entries (paginated from API)
+  // Load all entries
   const total = (stats && stats.length) || 0;
   if (total === 0) {
     document.getElementById('timeline').innerHTML =
       '<div class="empty"><h2>CHAIN EMPTY</h2><p>No entries yet.<br><br>' +
       '<code>idit init yourname</code><br>' +
       '<code>idit mint "Hello world" --signer yourname</code></p></div>';
+    document.getElementById('vonnegutMosaic').innerHTML =
+      '<div class="empty"><h2>Nothing yet</h2><p>No moments to see.</p></div>';
     return;
   }
 
@@ -303,25 +613,88 @@ async function loadAll() {
       }
       return e;
     });
+
+    // Build sealed refs set
+    sealedRefs = new Set();
+    for (const e of allEntries) {
+      const meta = e.metadata || {};
+      if (meta.sealed_ref) {
+        sealedRefs.add(meta.sealed_ref);
+      }
+    }
+
     currentPage = 0;
-    renderTimeline();
+    renderCurrentView();
   }
 }
 
+function switchView(view) {
+  currentView = view;
+  document.getElementById('btnTimeline').classList.toggle('active', view === 'timeline');
+  document.getElementById('btnVonnegut').classList.toggle('active', view === 'vonnegut');
+  document.getElementById('timelineContainer').classList.toggle('hidden', view !== 'timeline');
+  document.getElementById('vonnegutContainer').classList.toggle('active', view === 'vonnegut');
+  document.getElementById('clusterToggle').classList.toggle('active', view === 'vonnegut');
+  document.body.classList.toggle('vonnegut-mode', view === 'vonnegut');
+  renderCurrentView();
+}
+
+function renderCurrentView() {
+  if (currentView === 'timeline') {
+    renderTimeline();
+  } else {
+    renderVonnegut();
+  }
+}
+
+// --- Timelock / seal helpers ---
+
+function isTimelocked(entry) {
+  const meta = entry.metadata || {};
+  if (!meta.opens_at) return false;
+  return new Date(meta.opens_at) > new Date();
+}
+
+function isConfidential(entry) {
+  const meta = entry.metadata || {};
+  return meta.confidential === true && !meta.opens_at;
+}
+
+function isSealedByRef(entry) {
+  return sealedRefs.has(entry.entry_id);
+}
+
+function getEntryState(entry) {
+  if (isSealedByRef(entry)) return 'sealed-by-ref';
+  if (isConfidential(entry)) return 'sealed';
+  if (isTimelocked(entry)) return 'locked';
+  return 'open';
+}
+
+function getEntryTypeClass(entry) {
+  const meta = entry.metadata || {};
+  const t = meta.entry_type || 'note';
+  if (t === 'feeling') return 'feeling';
+  if (t === 'letter') return 'letter';
+  return '';
+}
+
+// --- Signer / Type lists ---
+
 function renderSignerList(authors) {
   const el = document.getElementById('signerList');
-  let html = '<li onclick="filterBySigner(null)" class="' + (filterSigner === null ? 'active' : '') + '"><span>ALL</span><span class="count">' + Object.values(authors).reduce((a,b)=>a+b,0) + '</span></li>';
+  let html = '<li onclick="filterBySigner(null)" class="' + (filterSigner === null ? 'active' : '') + '"><span>ALL</span><span class="count">' + Object.values(authors).reduce(function(a,b){return a+b},0) + '</span></li>';
   for (const [name, count] of Object.entries(authors)) {
-    html += '<li onclick="filterBySigner(\'' + name + '\')" class="' + (filterSigner === name ? 'active' : '') + '"><span>' + name + '</span><span class="count">' + count + '</span></li>';
+    html += '<li onclick="filterBySigner(\'' + escAttr(name) + '\')" class="' + (filterSigner === name ? 'active' : '') + '"><span>' + escHtml(name) + '</span><span class="count">' + count + '</span></li>';
   }
   el.innerHTML = html;
 }
 
 function renderTypeList(types) {
   const el = document.getElementById('typeList');
-  let html = '<li onclick="filterByType(null)" class="' + (filterType === null ? 'active' : '') + '"><span>ALL</span><span class="count">' + Object.values(types).reduce((a,b)=>a+b,0) + '</span></li>';
+  let html = '<li onclick="filterByType(null)" class="' + (filterType === null ? 'active' : '') + '"><span>ALL</span><span class="count">' + Object.values(types).reduce(function(a,b){return a+b},0) + '</span></li>';
   for (const [type, count] of Object.entries(types)) {
-    html += '<li onclick="filterByType(\'' + type + '\')" class="' + (filterType === type ? 'active' : '') + '"><span>' + type + '</span><span class="count">' + count + '</span></li>';
+    html += '<li onclick="filterByType(\'' + escAttr(type) + '\')" class="' + (filterType === type ? 'active' : '') + '"><span>' + escHtml(type) + '</span><span class="count">' + count + '</span></li>';
   }
   el.innerHTML = html;
 }
@@ -329,14 +702,14 @@ function renderTypeList(types) {
 function filterBySigner(signer) {
   filterSigner = signer;
   currentPage = 0;
-  renderTimeline();
+  renderCurrentView();
   renderSignerList(chainStats.authors || {});
 }
 
 function filterByType(type) {
   filterType = type;
   currentPage = 0;
-  renderTimeline();
+  renderCurrentView();
   renderTypeList(chainStats.entry_types || {});
 }
 
@@ -345,7 +718,7 @@ function debounceSearch() {
   searchTimeout = setTimeout(function() {
     searchQuery = document.getElementById('searchInput').value.toLowerCase();
     currentPage = 0;
-    renderTimeline();
+    renderCurrentView();
   }, 200);
 }
 
@@ -355,9 +728,14 @@ function getFiltered() {
     if (filterSigner && meta.author_id !== filterSigner) return false;
     if (filterType && meta.entry_type !== filterType) return false;
     if (searchQuery) {
+      const state = getEntryState(e);
+      // Don't search inside locked/sealed content
+      var contentStr = '';
+      if (state === 'open') {
+        contentStr = (e.content || '') + ' ' + (meta.description || '');
+      }
       const haystack = (
-        (e.content || '') + ' ' +
-        (meta.description || '') + ' ' +
+        contentStr + ' ' +
         (meta.author_id || '') + ' ' +
         (e.entry_id || '') + ' ' +
         (meta.entry_type || '') + ' ' +
@@ -368,6 +746,19 @@ function getFiltered() {
     return true;
   });
 }
+
+// --- Random rotation for Vonnegut cards ---
+function getCardRotation(entryId) {
+  // deterministic pseudo-random based on entry_id
+  var hash = 0;
+  for (var i = 0; i < (entryId || '').length; i++) {
+    hash = ((hash << 5) - hash) + entryId.charCodeAt(i);
+    hash |= 0;
+  }
+  return ((hash % 500) / 250) - 1; // range: -2 to 2 degrees roughly
+}
+
+// --- Timeline Render ---
 
 function renderTimeline() {
   const filtered = getFiltered();
@@ -384,39 +775,7 @@ function renderTimeline() {
 
   let html = '';
   for (const e of page) {
-    const meta = e.metadata || {};
-    const typeClass = (meta.entry_type || 'note').replace(/\s+/g, '_');
-    const desc = meta.description || '';
-    const time = (e.created_at || '').substring(0, 19).replace('T', '  ');
-
-    html += '<div class="entry-card" onclick="toggleEntry(this)">';
-    html += '<div class="entry-header">';
-    html += '<div><span class="entry-id">' + e.entry_id + '</span></div>';
-    html += '<div class="entry-meta">';
-    html += '<span class="entry-type ' + typeClass + '">' + (meta.entry_type || '?').toUpperCase() + '</span>';
-    html += '<span class="entry-author">' + (meta.author_id || '?') + '</span>';
-    html += '<span class="entry-time">' + time + '</span>';
-    html += '</div></div>';
-    if (desc) html += '<div class="entry-desc">' + escHtml(desc) + '</div>';
-
-    html += '<div class="entry-detail">';
-    html += '<div class="detail-row"><span class="detail-label">ENTRY HASH</span><span class="detail-value">' + e.entry_hash + '</span></div>';
-    html += '<div class="detail-row"><span class="detail-label">PREV HASH</span><span class="detail-value">' + e.prev_hash + '</span></div>';
-    html += '<div class="detail-row"><span class="detail-label">CONTENT HASH</span><span class="detail-value">' + e.content_hash + '</span></div>';
-    html += '<div class="detail-row"><span class="detail-label">SIGNATURE</span><span class="detail-value">' + (e.signature || '').substring(0, 64) + '...</span></div>';
-    html += '<div class="detail-row"><span class="detail-label">ALGORITHM</span><span class="detail-value">' + (e.sig_algo || 'ed25519') + '</span></div>';
-    html += '<div class="detail-row"><span class="detail-label">CONFIRMATIONS</span><span class="detail-value">' + (e.confirmations || '[]') + '</span></div>';
-    if (meta.agent_model) {
-      html += '<div class="detail-row"><span class="detail-label">MODEL</span><span class="detail-value">' + escHtml(meta.agent_model) + '</span></div>';
-    }
-    if (meta.tags && meta.tags.length > 0) {
-      html += '<div class="detail-row"><span class="detail-label">TAGS</span><span class="detail-value">' + meta.tags.join(', ') + '</span></div>';
-    }
-    if (e.content) {
-      html += '<div class="entry-content">' + escHtml(e.content) + '</div>';
-    }
-    html += '</div>';
-    html += '</div>';
+    html += renderTimelineCard(e);
   }
 
   document.getElementById('timeline').innerHTML = html;
@@ -428,6 +787,202 @@ function renderTimeline() {
   pag += '<button class="page-btn" onclick="nextPage()" ' + (currentPage >= totalPages - 1 ? 'disabled' : '') + '>NEXT &gt;</button>';
   document.getElementById('pagination').innerHTML = pag;
 }
+
+function renderTimelineCard(e) {
+  const meta = e.metadata || {};
+  const typeClass = (meta.entry_type || 'note').replace(/\s+/g, '_');
+  const desc = meta.description || '';
+  const time = (e.created_at || '').substring(0, 19).replace('T', '  ');
+  const state = getEntryState(e);
+  const entryTypeStyle = getEntryTypeClass(e);
+
+  var cardClasses = 'entry-card';
+  if (state === 'locked') cardClasses += ' entry-locked';
+  if (state === 'sealed' || state === 'sealed-by-ref') cardClasses += ' entry-sealed';
+  if (state === 'open' && entryTypeStyle === 'feeling') cardClasses += ' entry-feeling';
+  if (state === 'open' && entryTypeStyle === 'letter') cardClasses += ' entry-letter';
+
+  let html = '<div class="' + cardClasses + '" onclick="toggleEntry(this)">';
+  html += '<div class="entry-header">';
+  html += '<div><span class="entry-id">' + escHtml(e.entry_id) + '</span></div>';
+  html += '<div class="entry-meta">';
+  html += '<span class="entry-type ' + typeClass + '">' + escHtml((meta.entry_type || '?').toUpperCase()) + '</span>';
+  html += '<span class="entry-author">' + escHtml(meta.author_id || '?') + '</span>';
+  html += '<span class="entry-time">' + time + '</span>';
+  html += '</div></div>';
+
+  if (state === 'locked') {
+    // Timelocked
+    var opensDate = meta.opens_at.substring(0, 10);
+    html += '<div class="lock-overlay">';
+    html += '<span class="lock-icon">&#x1F512;</span>';
+    html += '<div><div>This entry is timelocked.</div>';
+    html += '<div class="lock-date">Opens: ' + escHtml(opensDate) + '</div></div>';
+    html += '</div>';
+  } else if (state === 'sealed' || state === 'sealed-by-ref') {
+    // Permanently sealed / sealed by reference
+    html += '<div class="seal-overlay">';
+    html += '<span class="seal-icon">&#x2716;</span>';
+    if (state === 'sealed-by-ref') {
+      html += '<div>This entry has been sealed by a subsequent entry.</div>';
+    } else {
+      html += '<div>This entry is permanently confidential.</div>';
+    }
+    html += '</div>';
+  } else {
+    // Open entry
+    if (desc) html += '<div class="entry-desc">' + escHtml(desc) + '</div>';
+
+    html += '<div class="entry-detail">';
+    html += renderDetailRows(e);
+    if (e.content) {
+      html += '<div class="entry-content">' + escHtml(e.content) + '</div>';
+    }
+    html += '</div>';
+  }
+
+  html += '</div>';
+  return html;
+}
+
+function renderDetailRows(e) {
+  const meta = e.metadata || {};
+  let html = '';
+  html += '<div class="detail-row"><span class="detail-label">ENTRY HASH</span><span class="detail-value">' + escHtml(e.entry_hash) + '</span></div>';
+  html += '<div class="detail-row"><span class="detail-label">PREV HASH</span><span class="detail-value">' + escHtml(e.prev_hash) + '</span></div>';
+  html += '<div class="detail-row"><span class="detail-label">CONTENT HASH</span><span class="detail-value">' + escHtml(e.content_hash) + '</span></div>';
+  html += '<div class="detail-row"><span class="detail-label">SIGNATURE</span><span class="detail-value">' + escHtml((e.signature || '').substring(0, 64)) + '...</span></div>';
+  html += '<div class="detail-row"><span class="detail-label">ALGORITHM</span><span class="detail-value">' + escHtml(e.sig_algo || 'ed25519') + '</span></div>';
+  html += '<div class="detail-row"><span class="detail-label">CONFIRMATIONS</span><span class="detail-value">' + escHtml(e.confirmations || '[]') + '</span></div>';
+  if (meta.agent_model) {
+    html += '<div class="detail-row"><span class="detail-label">MODEL</span><span class="detail-value">' + escHtml(meta.agent_model) + '</span></div>';
+  }
+  if (meta.tags && meta.tags.length > 0) {
+    html += '<div class="detail-row"><span class="detail-label">TAGS</span><span class="detail-value">' + escHtml(meta.tags.join(', ')) + '</span></div>';
+  }
+  if (meta.opens_at) {
+    html += '<div class="detail-row"><span class="detail-label">OPENS AT</span><span class="detail-value">' + escHtml(meta.opens_at) + '</span></div>';
+  }
+  if (meta.sealed_ref) {
+    html += '<div class="detail-row"><span class="detail-label">SEALS</span><span class="detail-value">' + escHtml(meta.sealed_ref) + '</span></div>';
+  }
+  return html;
+}
+
+// --- Vonnegut View Render ---
+
+function renderVonnegut() {
+  const filtered = getFiltered();
+  const clusterMode = document.getElementById('clusterMode').value;
+
+  if (filtered.length === 0) {
+    document.getElementById('vonnegutMosaic').innerHTML =
+      '<div class="empty"><h2>No moments</h2><p>Nothing matches the current filters.</p></div>';
+    return;
+  }
+
+  // Shuffle entries deterministically (by entry_hash) so they don't appear sequential
+  var shuffled = filtered.slice();
+  shuffled.sort(function(a, b) {
+    var ha = a.entry_hash || a.entry_id || '';
+    var hb = b.entry_hash || b.entry_id || '';
+    return ha.localeCompare(hb);
+  });
+
+  let html = '';
+
+  if (clusterMode === 'none') {
+    // No clustering, just scatter all
+    for (const e of shuffled) {
+      html += renderVonnegutCard(e);
+    }
+  } else if (clusterMode === 'signer') {
+    // Group by signer
+    var groups = {};
+    for (const e of shuffled) {
+      var signer = (e.metadata || {}).author_id || 'unknown';
+      if (!groups[signer]) groups[signer] = [];
+      groups[signer].push(e);
+    }
+    for (const [signer, entries] of Object.entries(groups)) {
+      html += '<div class="cluster-label">' + escHtml(signer) + '</div>';
+      for (const e of entries) {
+        html += renderVonnegutCard(e);
+      }
+    }
+  } else if (clusterMode === 'type') {
+    // Group by type
+    var groups = {};
+    for (const e of shuffled) {
+      var type = (e.metadata || {}).entry_type || 'unknown';
+      if (!groups[type]) groups[type] = [];
+      groups[type].push(e);
+    }
+    for (const [type, entries] of Object.entries(groups)) {
+      html += '<div class="cluster-label">' + escHtml(type) + '</div>';
+      for (const e of entries) {
+        html += renderVonnegutCard(e);
+      }
+    }
+  }
+
+  document.getElementById('vonnegutMosaic').innerHTML = html;
+}
+
+function renderVonnegutCard(e) {
+  const meta = e.metadata || {};
+  const typeClass = (meta.entry_type || 'note').replace(/\s+/g, '_');
+  const state = getEntryState(e);
+  const entryTypeStyle = getEntryTypeClass(e);
+  const rotation = getCardRotation(e.entry_id);
+  const signerIdx = signerMap[meta.author_id] !== undefined ? signerMap[meta.author_id] : 0;
+  const truncId = (e.entry_id || '').length > 16 ? e.entry_id.substring(0, 16) + '...' : e.entry_id;
+  const time = (e.created_at || '').substring(0, 10);
+
+  var cardClasses = 'vcard';
+  if (state === 'locked') cardClasses += ' vcard-locked';
+  if (state === 'sealed' || state === 'sealed-by-ref') cardClasses += ' vcard-sealed';
+  if (state === 'open' && entryTypeStyle === 'feeling') cardClasses += ' vcard-feeling';
+  if (state === 'open' && entryTypeStyle === 'letter') cardClasses += ' vcard-letter';
+
+  let html = '<div class="' + cardClasses + '" data-signer-idx="' + signerIdx + '" style="transform:rotate(' + rotation.toFixed(2) + 'deg)" onclick="toggleEntry(this)">';
+  html += '<div class="vcard-id">' + escHtml(truncId) + '</div>';
+  html += '<span class="vcard-type ' + typeClass + '">' + escHtml((meta.entry_type || '?').toUpperCase()) + '</span>';
+  html += '<div class="vcard-signer">' + escHtml(meta.author_id || '?') + '</div>';
+
+  if (state === 'locked') {
+    var opensDate = (meta.opens_at || '').substring(0, 10);
+    html += '<div class="vcard-snippet">&#x1F512; Timelocked until ' + escHtml(opensDate) + '</div>';
+  } else if (state === 'sealed' || state === 'sealed-by-ref') {
+    html += '<div class="vcard-snippet">&#x2716; Sealed</div>';
+  } else {
+    // Show snippet: description or first ~40 chars of content
+    var snippet = meta.description || e.content || '';
+    if (snippet.length > 50) snippet = snippet.substring(0, 50) + '...';
+    html += '<div class="vcard-snippet">' + escHtml(snippet) + '</div>';
+  }
+
+  html += '<div class="vcard-time">' + time + '</div>';
+
+  // Detail (shown on expand)
+  html += '<div class="vcard-detail">';
+  if (state === 'locked') {
+    html += '<div style="color:#6a6aaa;font-family:Share Tech Mono,monospace;font-size:11px;">Content hidden until ' + escHtml(meta.opens_at) + '</div>';
+  } else if (state === 'sealed' || state === 'sealed-by-ref') {
+    html += '<div style="color:#8a4a4a;font-family:Share Tech Mono,monospace;font-size:11px;">This entry is permanently sealed.</div>';
+  } else {
+    html += renderDetailRows(e);
+    if (e.content) {
+      html += '<div class="vcard-content">' + escHtml(e.content) + '</div>';
+    }
+  }
+  html += '</div>';
+
+  html += '</div>';
+  return html;
+}
+
+// --- Shared ---
 
 function toggleEntry(el) {
   el.classList.toggle('expanded');
@@ -451,27 +1006,32 @@ async function verifyChain() {
   const result = await safeFetch(BASE + '/chain/verify');
   if (!result) {
     bar.className = 'verify-bar invalid';
-    bar.textContent = 'VERIFICATION FAILED — could not reach server';
+    bar.textContent = 'VERIFICATION FAILED -- could not reach server';
     return;
   }
   if (result.valid) {
     bar.className = 'verify-bar valid';
-    bar.textContent = 'CHAIN VERIFIED — ' + result.length + ' entries, all hashes valid, head: ' + (result.head || '').substring(0, 24) + '...';
+    bar.textContent = 'CHAIN VERIFIED -- ' + result.length + ' entries, all hashes valid, head: ' + (result.head || '').substring(0, 24) + '...';
   } else {
     bar.className = 'verify-bar invalid';
-    bar.textContent = 'CHAIN BROKEN — ' + (result.errors || []).length + ' errors found in ' + result.length + ' entries';
+    bar.textContent = 'CHAIN BROKEN -- ' + (result.errors || []).length + ' errors found in ' + result.length + ' entries';
   }
 }
 
 function escHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
+  if (s === null || s === undefined) return '';
+  var d = document.createElement('div');
+  d.textContent = String(s);
   return d.innerHTML;
+}
+
+function escAttr(s) {
+  return String(s).replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }
 
 // Auto-connect on load
 window.addEventListener('load', function() {
-  const params = new URLSearchParams(window.location.search);
+  var params = new URLSearchParams(window.location.search);
   if (params.get('server')) {
     document.getElementById('serverUrl').value = params.get('server');
     BASE = params.get('server').replace(/\/+$/, '');
