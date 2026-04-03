@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Idit Viewer</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Share Tech Mono', monospace;
+    background: #0a0a0a; color: #33ff33;
+    min-height: 100vh;
+  }
+  body::before {
+    content: ''; position: fixed; top:0; left:0; right:0; bottom:0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px);
+    pointer-events: none; z-index: 999;
+  }
+  a { color: #00ffcc; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Top bar */
+  .topbar {
+    background: #0d1a0d; border-bottom: 1px solid #1a3a1a;
+    padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .topbar h1 {
+    font-size: 16px; letter-spacing: 4px; color: #33ff33;
+    text-shadow: 0 0 10px rgba(51,255,51,0.4);
+  }
+  .topbar .sub { color: #1a8a1a; font-size: 10px; letter-spacing: 2px; margin-left: 12px; }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .server-url {
+    background: #050f05; border: 1px solid #1a3a1a; color: #33ff33;
+    font-family: 'Share Tech Mono', monospace; font-size: 12px;
+    padding: 6px 10px; width: 240px; outline: none;
+  }
+  .server-url:focus { border-color: #33ff33; }
+  .connect-btn {
+    background: #1a3a1a; border: 1px solid #33ff33; color: #33ff33;
+    font-family: 'Share Tech Mono', monospace; font-size: 11px;
+    padding: 6px 14px; cursor: pointer; letter-spacing: 1px;
+  }
+  .connect-btn:hover { background: #33ff33; color: #0a0a0a; }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #ff3333; display: inline-block;
+  }
+  .status-dot.ok { background: #33ff33; box-shadow: 0 0 6px rgba(51,255,51,0.6); }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex; gap: 32px; padding: 16px 24px;
+    border-bottom: 1px solid #0d1a0d; flex-wrap: wrap;
+  }
+  .stat { display: flex; flex-direction: column; }
+  .stat .val { color: #33ff33; font-size: 22px; }
+  .stat .lbl { color: #1a8a1a; font-size: 9px; letter-spacing: 1px; margin-top: 2px; }
+
+  /* Layout */
+  .main { display: flex; min-height: calc(100vh - 120px); }
+  .sidebar {
+    width: 240px; min-width: 240px; border-right: 1px solid #1a3a1a;
+    background: #0d1a0d; padding: 16px; overflow-y: auto;
+  }
+  .content { flex: 1; padding: 20px 24px; overflow-y: auto; }
+
+  /* Sidebar */
+  .sidebar h3 { font-size: 10px; color: #1a8a1a; letter-spacing: 2px; margin-bottom: 10px; }
+  .filter-group { margin-bottom: 20px; }
+  .filter-group label { display: block; font-size: 10px; color: #1a8a1a; letter-spacing: 1px; margin-bottom: 4px; }
+  .filter-group input, .filter-group select {
+    width: 100%; background: #050f05; border: 1px solid #1a3a1a; color: #33ff33;
+    font-family: 'Share Tech Mono', monospace; font-size: 11px; padding: 6px 8px; outline: none;
+  }
+  .filter-group input:focus, .filter-group select:focus { border-color: #33ff33; }
+  .signer-list { list-style: none; }
+  .signer-list li {
+    padding: 4px 0; font-size: 11px; cursor: pointer; display: flex;
+    justify-content: space-between; align-items: center;
+  }
+  .signer-list li:hover { color: #00ffcc; }
+  .signer-list li.active { color: #00ffcc; }
+  .signer-list .count { color: #1a8a1a; font-size: 10px; }
+  .type-list { list-style: none; }
+  .type-list li {
+    padding: 3px 0; font-size: 11px; cursor: pointer; display: flex;
+    justify-content: space-between; align-items: center;
+  }
+  .type-list li:hover { color: #ffaa00; }
+  .type-list li.active { color: #ffaa00; }
+  .type-list .count { color: #1a8a1a; font-size: 10px; }
+
+  /* Verify banner */
+  .verify-bar {
+    padding: 8px 24px; font-size: 11px; letter-spacing: 1px;
+    display: none;
+  }
+  .verify-bar.valid { display: block; background: #0d1a0d; color: #33ff33; border-bottom: 1px solid #1a3a1a; }
+  .verify-bar.invalid { display: block; background: #1a0d0d; color: #ff3333; border-bottom: 1px solid #3a1a1a; }
+
+  /* Timeline */
+  .timeline { max-width: 900px; }
+  .entry-card {
+    background: #0d1a0d; border: 1px solid #1a3a1a;
+    padding: 16px; margin-bottom: 12px; cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .entry-card:hover { border-color: #33ff33; }
+  .entry-card.expanded { border-color: #00ffcc; }
+  .entry-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    flex-wrap: wrap; gap: 8px;
+  }
+  .entry-id { color: #00ffcc; font-size: 12px; }
+  .entry-meta { display: flex; gap: 16px; flex-wrap: wrap; }
+  .entry-type {
+    color: #0a0a0a; font-size: 10px; letter-spacing: 1px;
+    background: #1a8a1a; padding: 2px 8px; border-radius: 2px;
+  }
+  .entry-type.genesis { background: #ffaa00; }
+  .entry-type.note { background: #1a8a1a; }
+  .entry-type.memory { background: #6a5acd; color: #fff; }
+  .entry-type.decision { background: #ff6633; }
+  .entry-type.milestone { background: #ffd700; color: #0a0a0a; }
+  .entry-type.document { background: #4a9eff; }
+  .entry-type.letter { background: #ff69b4; color: #0a0a0a; }
+  .entry-type.morning_report { background: #33cccc; color: #0a0a0a; }
+  .entry-type.battle_plan { background: #ff3333; }
+  .entry-author { color: #ffaa00; font-size: 11px; }
+  .entry-time { color: #0d5a0d; font-size: 11px; }
+  .entry-desc { color: #669966; font-size: 12px; margin-top: 8px; }
+  .entry-detail {
+    display: none; margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid #1a3a1a;
+  }
+  .entry-card.expanded .entry-detail { display: block; }
+  .detail-row { display: flex; margin-bottom: 6px; font-size: 11px; }
+  .detail-label { color: #1a8a1a; min-width: 120px; }
+  .detail-value { color: #33ff33; word-break: break-all; }
+  .entry-content {
+    background: #050f05; border: 1px solid #1a3a1a;
+    padding: 12px; margin-top: 10px; font-size: 12px;
+    line-height: 1.6; white-space: pre-wrap; max-height: 400px;
+    overflow-y: auto; color: #aaffaa;
+  }
+
+  /* Pagination */
+  .pagination {
+    display: flex; justify-content: center; gap: 12px;
+    margin-top: 20px; padding: 16px 0;
+  }
+  .page-btn {
+    background: #1a3a1a; border: 1px solid #33ff33; color: #33ff33;
+    font-family: 'Share Tech Mono', monospace; font-size: 11px;
+    padding: 6px 16px; cursor: pointer; letter-spacing: 1px;
+  }
+  .page-btn:hover { background: #33ff33; color: #0a0a0a; }
+  .page-btn:disabled { opacity: 0.3; cursor: default; }
+  .page-btn:disabled:hover { background: #1a3a1a; color: #33ff33; }
+  .page-info { color: #1a8a1a; font-size: 11px; line-height: 32px; }
+
+  /* Empty state */
+  .empty {
+    text-align: center; padding: 60px 20px; color: #1a8a1a;
+  }
+  .empty h2 { font-size: 14px; letter-spacing: 2px; margin-bottom: 12px; color: #33ff33; }
+  .empty p { font-size: 12px; line-height: 1.8; }
+  .empty code {
+    background: #0d1a0d; padding: 2px 8px; border: 1px solid #1a3a1a;
+    color: #33ff33;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .main { flex-direction: column; }
+    .sidebar { width: 100%; min-width: unset; border-right: none; border-bottom: 1px solid #1a3a1a; }
+    .topbar { flex-direction: column; align-items: flex-start; }
+    .topbar-right { width: 100%; }
+    .server-url { flex: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div style="display:flex;align-items:center;">
+    <h1>IDIT</h1>
+    <span class="sub">CHAIN VIEWER</span>
+  </div>
+  <div class="topbar-right">
+    <span class="status-dot" id="statusDot"></span>
+    <input type="text" class="server-url" id="serverUrl" value="http://localhost:18793" placeholder="Server URL">
+    <button class="connect-btn" onclick="connectToServer()">CONNECT</button>
+  </div>
+</div>
+
+<div class="stats-bar" id="statsBar">
+  <div class="stat"><div class="val" id="statEntries">-</div><div class="lbl">ENTRIES</div></div>
+  <div class="stat"><div class="val" id="statSigners">-</div><div class="lbl">SIGNERS</div></div>
+  <div class="stat"><div class="val" id="statTypes">-</div><div class="lbl">TYPES</div></div>
+  <div class="stat"><div class="val" id="statGenesis">-</div><div class="lbl">GENESIS</div></div>
+  <div class="stat"><div class="val" id="statLatest">-</div><div class="lbl">LATEST</div></div>
+</div>
+
+<div class="verify-bar" id="verifyBar"></div>
+
+<div class="main">
+  <div class="sidebar">
+    <div class="filter-group">
+      <h3>[ SEARCH ]</h3>
+      <input type="text" id="searchInput" placeholder="Search entries..." oninput="debounceSearch()">
+    </div>
+    <div class="filter-group">
+      <h3>[ SIGNERS ]</h3>
+      <ul class="signer-list" id="signerList"></ul>
+    </div>
+    <div class="filter-group">
+      <h3>[ TYPES ]</h3>
+      <ul class="type-list" id="typeList"></ul>
+    </div>
+    <div class="filter-group" style="margin-top:30px;">
+      <button class="connect-btn" style="width:100%;font-size:10px;" onclick="verifyChain()">VERIFY CHAIN</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="timeline" id="timeline"></div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+</div>
+
+<script>
+let BASE = 'http://localhost:18793';
+let allEntries = [];
+let chainStats = {};
+let currentPage = 0;
+const PAGE_SIZE = 20;
+let filterSigner = null;
+let filterType = null;
+let searchQuery = '';
+let searchTimeout = null;
+
+function connectToServer() {
+  BASE = document.getElementById('serverUrl').value.replace(/\/+$/, '');
+  loadAll();
+}
+
+async function safeFetch(url) {
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(r.statusText);
+    return await r.json();
+  } catch(e) {
+    console.error('Fetch error:', url, e);
+    return null;
+  }
+}
+
+async function loadAll() {
+  document.getElementById('statusDot').className = 'status-dot';
+
+  const health = await safeFetch(BASE + '/health');
+  if (!health) {
+    document.getElementById('statusDot').className = 'status-dot';
+    document.getElementById('timeline').innerHTML =
+      '<div class="empty"><h2>CONNECTION FAILED</h2><p>Cannot reach ' + BASE +
+      '<br><br>Make sure your Idit server is running:<br><code>idit serve</code></p></div>';
+    return;
+  }
+
+  document.getElementById('statusDot').className = 'status-dot ok';
+
+  const stats = await safeFetch(BASE + '/chain/stats');
+  if (stats) {
+    chainStats = stats;
+    document.getElementById('statEntries').textContent = stats.length || 0;
+    document.getElementById('statSigners').textContent = Object.keys(stats.authors || {}).length;
+    document.getElementById('statTypes').textContent = Object.keys(stats.entry_types || {}).length;
+    document.getElementById('statGenesis').textContent = stats.genesis_time ? stats.genesis_time.substring(0, 10) : '-';
+    document.getElementById('statLatest').textContent = stats.latest_time ? stats.latest_time.substring(0, 10) : '-';
+
+    renderSignerList(stats.authors || {});
+    renderTypeList(stats.entry_types || {});
+  }
+
+  // Load all entries (paginated from API)
+  const total = (stats && stats.length) || 0;
+  if (total === 0) {
+    document.getElementById('timeline').innerHTML =
+      '<div class="empty"><h2>CHAIN EMPTY</h2><p>No entries yet.<br><br>' +
+      '<code>idit init yourname</code><br>' +
+      '<code>idit mint "Hello world" --signer yourname</code></p></div>';
+    return;
+  }
+
+  const chain = await safeFetch(BASE + '/chain?limit=' + total + '&offset=0');
+  if (chain && chain.entries) {
+    allEntries = chain.entries.map(function(e) {
+      if (typeof e.metadata === 'string') {
+        try { e.metadata = JSON.parse(e.metadata); } catch(x) {}
+      }
+      return e;
+    });
+    currentPage = 0;
+    renderTimeline();
+  }
+}
+
+function renderSignerList(authors) {
+  const el = document.getElementById('signerList');
+  let html = '<li onclick="filterBySigner(null)" class="' + (filterSigner === null ? 'active' : '') + '"><span>ALL</span><span class="count">' + Object.values(authors).reduce((a,b)=>a+b,0) + '</span></li>';
+  for (const [name, count] of Object.entries(authors)) {
+    html += '<li onclick="filterBySigner(\'' + name + '\')" class="' + (filterSigner === name ? 'active' : '') + '"><span>' + name + '</span><span class="count">' + count + '</span></li>';
+  }
+  el.innerHTML = html;
+}
+
+function renderTypeList(types) {
+  const el = document.getElementById('typeList');
+  let html = '<li onclick="filterByType(null)" class="' + (filterType === null ? 'active' : '') + '"><span>ALL</span><span class="count">' + Object.values(types).reduce((a,b)=>a+b,0) + '</span></li>';
+  for (const [type, count] of Object.entries(types)) {
+    html += '<li onclick="filterByType(\'' + type + '\')" class="' + (filterType === type ? 'active' : '') + '"><span>' + type + '</span><span class="count">' + count + '</span></li>';
+  }
+  el.innerHTML = html;
+}
+
+function filterBySigner(signer) {
+  filterSigner = signer;
+  currentPage = 0;
+  renderTimeline();
+  renderSignerList(chainStats.authors || {});
+}
+
+function filterByType(type) {
+  filterType = type;
+  currentPage = 0;
+  renderTimeline();
+  renderTypeList(chainStats.entry_types || {});
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(function() {
+    searchQuery = document.getElementById('searchInput').value.toLowerCase();
+    currentPage = 0;
+    renderTimeline();
+  }, 200);
+}
+
+function getFiltered() {
+  return allEntries.filter(function(e) {
+    const meta = e.metadata || {};
+    if (filterSigner && meta.author_id !== filterSigner) return false;
+    if (filterType && meta.entry_type !== filterType) return false;
+    if (searchQuery) {
+      const haystack = (
+        (e.content || '') + ' ' +
+        (meta.description || '') + ' ' +
+        (meta.author_id || '') + ' ' +
+        (e.entry_id || '') + ' ' +
+        (meta.entry_type || '') + ' ' +
+        ((meta.tags || []).join(' '))
+      ).toLowerCase();
+      if (haystack.indexOf(searchQuery) === -1) return false;
+    }
+    return true;
+  });
+}
+
+function renderTimeline() {
+  const filtered = getFiltered();
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const start = currentPage * PAGE_SIZE;
+  const page = filtered.slice(start, start + PAGE_SIZE);
+
+  if (page.length === 0) {
+    document.getElementById('timeline').innerHTML =
+      '<div class="empty"><h2>NO MATCHES</h2><p>No entries match the current filters.</p></div>';
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  let html = '';
+  for (const e of page) {
+    const meta = e.metadata || {};
+    const typeClass = (meta.entry_type || 'note').replace(/\s+/g, '_');
+    const desc = meta.description || '';
+    const time = (e.created_at || '').substring(0, 19).replace('T', '  ');
+
+    html += '<div class="entry-card" onclick="toggleEntry(this)">';
+    html += '<div class="entry-header">';
+    html += '<div><span class="entry-id">' + e.entry_id + '</span></div>';
+    html += '<div class="entry-meta">';
+    html += '<span class="entry-type ' + typeClass + '">' + (meta.entry_type || '?').toUpperCase() + '</span>';
+    html += '<span class="entry-author">' + (meta.author_id || '?') + '</span>';
+    html += '<span class="entry-time">' + time + '</span>';
+    html += '</div></div>';
+    if (desc) html += '<div class="entry-desc">' + escHtml(desc) + '</div>';
+
+    html += '<div class="entry-detail">';
+    html += '<div class="detail-row"><span class="detail-label">ENTRY HASH</span><span class="detail-value">' + e.entry_hash + '</span></div>';
+    html += '<div class="detail-row"><span class="detail-label">PREV HASH</span><span class="detail-value">' + e.prev_hash + '</span></div>';
+    html += '<div class="detail-row"><span class="detail-label">CONTENT HASH</span><span class="detail-value">' + e.content_hash + '</span></div>';
+    html += '<div class="detail-row"><span class="detail-label">SIGNATURE</span><span class="detail-value">' + (e.signature || '').substring(0, 64) + '...</span></div>';
+    html += '<div class="detail-row"><span class="detail-label">ALGORITHM</span><span class="detail-value">' + (e.sig_algo || 'ed25519') + '</span></div>';
+    html += '<div class="detail-row"><span class="detail-label">CONFIRMATIONS</span><span class="detail-value">' + (e.confirmations || '[]') + '</span></div>';
+    if (meta.agent_model) {
+      html += '<div class="detail-row"><span class="detail-label">MODEL</span><span class="detail-value">' + escHtml(meta.agent_model) + '</span></div>';
+    }
+    if (meta.tags && meta.tags.length > 0) {
+      html += '<div class="detail-row"><span class="detail-label">TAGS</span><span class="detail-value">' + meta.tags.join(', ') + '</span></div>';
+    }
+    if (e.content) {
+      html += '<div class="entry-content">' + escHtml(e.content) + '</div>';
+    }
+    html += '</div>';
+    html += '</div>';
+  }
+
+  document.getElementById('timeline').innerHTML = html;
+
+  // Pagination
+  let pag = '';
+  pag += '<button class="page-btn" onclick="prevPage()" ' + (currentPage === 0 ? 'disabled' : '') + '>&lt; PREV</button>';
+  pag += '<span class="page-info">' + (currentPage + 1) + ' / ' + Math.max(totalPages, 1) + ' (' + filtered.length + ' entries)</span>';
+  pag += '<button class="page-btn" onclick="nextPage()" ' + (currentPage >= totalPages - 1 ? 'disabled' : '') + '>NEXT &gt;</button>';
+  document.getElementById('pagination').innerHTML = pag;
+}
+
+function toggleEntry(el) {
+  el.classList.toggle('expanded');
+}
+
+function prevPage() { if (currentPage > 0) { currentPage--; renderTimeline(); } }
+function nextPage() {
+  const filtered = getFiltered();
+  if ((currentPage + 1) * PAGE_SIZE < filtered.length) { currentPage++; renderTimeline(); }
+}
+
+async function verifyChain() {
+  const bar = document.getElementById('verifyBar');
+  bar.className = 'verify-bar';
+  bar.style.display = 'block';
+  bar.textContent = 'VERIFYING CHAIN...';
+  bar.style.color = '#ffaa00';
+  bar.style.background = '#1a1a0d';
+  bar.style.borderBottomColor = '#3a3a1a';
+
+  const result = await safeFetch(BASE + '/chain/verify');
+  if (!result) {
+    bar.className = 'verify-bar invalid';
+    bar.textContent = 'VERIFICATION FAILED — could not reach server';
+    return;
+  }
+  if (result.valid) {
+    bar.className = 'verify-bar valid';
+    bar.textContent = 'CHAIN VERIFIED — ' + result.length + ' entries, all hashes valid, head: ' + (result.head || '').substring(0, 24) + '...';
+  } else {
+    bar.className = 'verify-bar invalid';
+    bar.textContent = 'CHAIN BROKEN — ' + (result.errors || []).length + ' errors found in ' + result.length + ' entries';
+  }
+}
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// Auto-connect on load
+window.addEventListener('load', function() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('server')) {
+    document.getElementById('serverUrl').value = params.get('server');
+    BASE = params.get('server').replace(/\/+$/, '');
+  }
+  connectToServer();
+});
+
+// Auto-refresh every 30 seconds
+setInterval(function() {
+  if (document.getElementById('statusDot').classList.contains('ok')) {
+    loadAll();
+  }
+}, 30000);
+</script>
+</body>
+</html>
